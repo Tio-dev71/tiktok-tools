@@ -44,6 +44,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT || 3000);
 
   app.use(express.json({ limit: "50mb" }));
+  app.use(express.static(path.join(process.cwd(), "public")));
 
   // =====================
   // TikTok OAuth (PKCE)
