@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
@@ -5,13 +6,30 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
-const app = express();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log("APP_URL =", process.env.APP_URL);
 console.log("TIKTOK_CLIENT_KEY =", process.env.TIKTOK_CLIENT_KEY);
+
+const pkceStore = new Map<string, { verifier: string; createdAt: number }>();
+
+function base64url(buf: Buffer) {
+  return buf
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function makeCodeVerifier() {
+  return base64url(crypto.randomBytes(32));
+}
+
+function makeCodeChallenge(verifier: string) {
+  const hash = crypto.createHash("sha256").update(verifier).digest();
+  return base64url(hash);
+}
 
 async function startServer() {
   const app = express();
@@ -26,11 +44,34 @@ async function startServer() {
 
   // TikTok Auth URL
   app.get("/api/auth/tiktok/url", (req, res) => {
-    if (!TIKTOK_CLIENT_KEY) {
-      return res.status(500).json({ error: "TIKTOK_CLIENT_KEY not configured" });
-    }
-    const state = Math.random().toString(36).substring(7);
-    const url = `https://www.tiktok.com/v2/auth/authorize/?client_key=${TIKTOK_CLIENT_KEY}&scope=video.upload,video.publish,user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
+    const clientKey = process.env.TIKTOK_CLIENT_KEY;
+    const appUrl = process.env.APP_URL;
+
+    if (!clientKey) return res.status(500).json({ error: "TIKTOK_CLIENT_KEY not configured" });
+    if (!appUrl) return res.status(500).json({ error: "APP_URL not configured" });
+
+    const redirectUri = `${appUrl}/api/auth/tiktok/callback`;
+
+    const state = crypto.randomBytes(16).toString("hex");
+    const verifier = makeCodeVerifier();
+    const challenge = makeCodeChallenge(verifier);
+
+    pkceStore.set(state, { verifier, createdAt: Date.now() });
+
+    const scope = "video.upload,video.publish,user.info.basic";
+
+    const url =
+      "https://www.tiktok.com/v2/auth/authorize/?" +
+      new URLSearchParams({
+        client_key: clientKey,
+        scope,
+        response_type: "code",
+        redirect_uri: redirectUri,
+        state,
+        code_challenge: challenge,
+        code_challenge_method: "S256",
+      }).toString();
+
     res.json({ url });
   });
 
@@ -38,6 +79,16 @@ async function startServer() {
   app.get("/api/auth/tiktok/callback", async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).send("No code provided");
+    const state = String(req.query.state || "");
+    if (!code || !state) return res.status(400).send("Missing code/state");
+
+    const saved = pkceStore.get(state);
+    if (!saved) return res.status(400).send("Missing PKCE verifier for state");
+    pkceStore.delete(state);
+
+    const clientKey = process.env.TIKTOK_CLIENT_KEY!;
+    const clientSecret = process.env.TIKTOK_CLIENT_SECRET!;
+    const redirectUri = `${process.env.APP_URL}/api/auth/tiktok/callback`;
 
     try {
       const response = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
@@ -47,11 +98,12 @@ async function startServer() {
           "Cache-Control": "no-cache",
         },
         body: new URLSearchParams({
-          client_key: TIKTOK_CLIENT_KEY!,
-          client_secret: TIKTOK_CLIENT_SECRET!,
+          client_key: clientKey,
+          client_secret: clientSecret,
           code: code as string,
           grant_type: "authorization_code",
-          redirect_uri: REDIRECT_URI,
+          redirect_uri: redirectUri,
+          code_verifier: saved.verifier,
         }),
       });
 
@@ -178,8 +230,3 @@ async function startServer() {
 }
 
 startServer();
-
-// Serve Vite build
-const distPath = path.resolve(process.cwd(), "dist");
-app.use(express.static(distPath));
-app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
