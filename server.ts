@@ -110,7 +110,6 @@ async function startServer() {
       const data = await response.json();
       if (data.error) throw new Error(data.error_description || data.error);
 
-      // Send success message to parent window and close popup
       res.send(`
         <html>
           <body>
@@ -140,7 +139,6 @@ async function startServer() {
     }
 
     try {
-      // 1. Initialize Upload
       const initResponse = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
         method: "POST",
         headers: {
@@ -171,7 +169,6 @@ async function startServer() {
       const uploadUrl = initData.data.upload_url;
       const publishId = initData.data.publish_id;
 
-      // 2. Upload Video Data
       const videoBuffer = Buffer.from(videoBase64, 'base64');
       const uploadResponse = await fetch(uploadUrl, {
         method: "PUT",
@@ -191,7 +188,6 @@ async function startServer() {
     }
   });
 
-  // Proxy for Google Drive files to bypass CORS
   app.get("/api/proxy-drive", async (req, res) => {
     const { id } = req.query;
     if (!id) return res.status(400).send("Missing ID");
@@ -210,7 +206,6 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
