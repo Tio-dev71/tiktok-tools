@@ -159,7 +159,7 @@ async function uploadToFacebookReels({ videoBuffer, title, description }: { vide
       file_size: String(videoBuffer.length),
       "Content-Type": "application/octet-stream",
     },
-    body: videoBuffer,
+    body: new Uint8Array(videoBuffer),
   });
 
   const uploadText = await uploadRes.text();
@@ -196,7 +196,7 @@ async function uploadToFacebookReels({ videoBuffer, title, description }: { vide
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '200mb' }));
 
