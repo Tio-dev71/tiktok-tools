@@ -45,8 +45,8 @@ declare global {
   }
 }
 
-const DEFAULT_MASK_URL = '/src/effect/1. Thumbnail TLS1 Studio - tiktok - AI gg11.jpg';
-const DEFAULT_BGM_URL = '/src/effect/newsmusic.mp3';
+const DEFAULT_MASK_URL = '/public/effect/1. Thumbnail TLS1 Studio - tiktok - AI gg11.jpg';
+const DEFAULT_BGM_URL = '/public/effect/newsmusic.mp3';
 
 export default function App() {
   const [content, setContent] = useState('');
