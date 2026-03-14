@@ -45,8 +45,8 @@ declare global {
   }
 }
 
-const DEFAULT_MASK_URL = '/api/proxy-drive?id=1muS1qYePYXJcd1QzbldZQ1NGoBGoLacY';
-const DEFAULT_BGM_URL = '/api/proxy-drive?id=1D-8X5XmsUJX1f55rQy78etlR7093mckd';
+const DEFAULT_MASK_URL = '/src/effect/1. Thumbnail TLS1 Studio - tiktok - AI gg11.jpg';
+const DEFAULT_BGM_URL = '/src/effect/newsmusic.mp3';
 
 export default function App() {
   const [content, setContent] = useState('');
@@ -508,7 +508,17 @@ export default function App() {
           }),
         });
 
-        const publishPayload = await publishResponse.json();
+        const rawText = await publishResponse.text();
+        let publishPayload: any = {};
+        try {
+          publishPayload = rawText ? JSON.parse(rawText) : {};
+        } catch {
+          throw new Error(`Backend không trả JSON hợp lệ: ${rawText.slice(0, 300)}`);
+        }
+
+        if (!publishResponse.ok) {
+          throw new Error(publishPayload.error || `Auto publish thất bại: ${rawText.slice(0, 300)}`);
+        }
         if (!publishResponse.ok) {
           throw new Error(publishPayload.error || 'Không thể tự động đăng YouTube/Facebook');
         }
@@ -1730,7 +1740,7 @@ export default function App() {
       </main>
 
       <footer className="max-w-5xl mx-auto px-6 py-12 border-t border-black/5 text-center text-stone-400 text-sm">
-        <p>© 2024 News Video Creator. Powered by Google Gemini & Veo.</p>
+        <p>© 2026 by Tiodev</p>
       </footer>
     </div>
   );
