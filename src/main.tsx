@@ -1,10 +1,10 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import RenderWorker from "./RenderWorker";
+import "./index.css";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+const path = window.location.pathname;
+
+createRoot(document.getElementById("root")!).render(
+  path === "/render-worker" ? <RenderWorker /> : <App />
 );

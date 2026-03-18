@@ -2,23 +2,7 @@ import { GoogleGenAI, Modality, Type, VideoGenerationReferenceType } from "@goog
 
 export class GeminiService {
   private getApiKey(): string {
-    try {
-      // @ts-ignore
-      const dynamicKey = process.env.API_KEY;
-      if (dynamicKey && dynamicKey !== "MY_APP_URL" && dynamicKey !== "") {
-        return dynamicKey;
-      }
-    } catch (e) {}
-
-    try {
-      // @ts-ignore
-      const buildKey = process.env.GEMINI_API_KEY;
-      if (buildKey && buildKey !== '') {
-        return buildKey;
-      }
-    } catch (e) {}
-
-    return "";
+    return process.env.GEMINI_API_KEY || "";
   }
 
   private getClient(): GoogleGenAI {
@@ -57,6 +41,9 @@ export class GeminiService {
 
   async generateScript(content: string): Promise<string> {
     return this.withRetry(async () => {
+      this.logKey();
+      this.logModel("generateScript", "gemini-3-flash-preview");
+
       const ai = this.getClient();
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -90,8 +77,11 @@ export class GeminiService {
     });
   }
 
-  async generateAudio(text: string): Promise<string> {
+  async generateAudio(text: string): Promise<{ base64: string; mimeType: string }> {
     return this.withRetry(async () => {
+      this.logKey();
+      this.logModel("generateAudio", "gemini-2.5-flash-preview-tts");
+
       const ai = this.getClient();
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
@@ -110,14 +100,27 @@ export class GeminiService {
         },
       });
 
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+      const base64Audio = inlineData?.data;
+      const mimeType = inlineData?.mimeType || "audio/mpeg";
+
       if (!base64Audio) throw new Error("Failed to generate audio");
-      return base64Audio;
+
+      console.log("[Gemini] audio mimeType:", mimeType);
+      console.log("[Gemini] audio base64 prefix:", String(base64Audio).slice(0, 60));
+
+      return {
+        base64: base64Audio,
+        mimeType,
+      };
     });
   }
 
   async generateTitle(script: string): Promise<string> {
     return this.withRetry(async () => {
+      this.logKey();
+      this.logModel("generateTitle", "gemini-3-flash-preview");
+
       const ai = this.getClient();
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -139,6 +142,9 @@ export class GeminiService {
 
   async generateImage(prompt: string, sourceImageBase64?: string, badge?: string): Promise<string> {
     return this.withRetry(async () => {
+      this.logKey();
+      this.logModel("generateImage", "gemini-2.5-flash-image");
+
       const ai = this.getClient();
       const style = `The Economist style editorial political cartoon infographic, hand-drawn financial illustration, satirical macroeconomic artwork, vintage newspaper texture, sepia and muted tones, dramatic cross-hatching, high detail, professional editorial illustration`;
       
@@ -197,5 +203,14 @@ export class GeminiService {
       }
       throw new Error("No image data returned from Gemini");
     });
+  }
+
+  private logKey() {
+    const key = this.getApiKey();
+    console.log("[Gemini] key prefix:", key ? key.slice(0, 12) : "NO_KEY");
+  }
+
+  private logModel(name: string, model: string) {
+    console.log(`[Gemini] ${name} using model: ${model}`);
   }
 }
