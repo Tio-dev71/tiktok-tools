@@ -171,14 +171,18 @@ export async function runAutomationPipeline(input: PipelineInput) {
   if (process.env.AUTO_PUBLISH_FACEBOOK === "true") {
     try {
       console.log("[Pipeline] Bắt đầu upload Facebook");
+
+      const facebookDescription = `${generatedScript}`;
+
       results.facebook = {
         success: true,
         data: await uploadToFacebookReels({
           videoBuffer,
-          title: finalHook,
-          description: generatedScript,
+          title: facebookDescription, 
+          description: facebookDescription,
         }),
       };
+
       console.log("[Pipeline] Upload Facebook xong");
     } catch (e: any) {
       console.error("[Pipeline] Upload Facebook lỗi:", e);

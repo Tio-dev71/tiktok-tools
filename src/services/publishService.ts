@@ -157,7 +157,7 @@ async function uploadToFacebookReels({ videoBuffer, title, description }: { vide
       upload_phase: "finish",
       video_id: startData.video_id,
       video_state: "PUBLISHED",
-      description: description || "",
+      description: title || "",
       title: title || "",
     }),
   });

@@ -330,15 +330,42 @@ export async function renderNewsVideoLocally(
 
           ctx.drawImage(elementToDraw, drawX, drawY, drawW, drawH);
         } else {
-          const scaleW = canvas.width / sourceW;
-          const scaleH = canvas.height / sourceH;
-          const baseScale = Math.max(scaleW, scaleH);
-          const finalScale = baseScale * zoomFactor;
-          const drawW = sourceW * finalScale;
-          const drawH = sourceH * finalScale;
-          const drawX = (canvas.width - drawW) / 2;
-          const drawY = (canvas.height - drawH) / 2;
-          ctx.drawImage(elementToDraw, drawX, drawY, drawW, drawH);
+          const isLandscapeImage = item.type === "image" && sourceW > sourceH;
+
+          if (isLandscapeImage) {
+            // Ảnh ngang: giữ nguyên bố cục contain, không phóng full màn hình,
+            // nhưng vẫn giữ effect zoom out nhẹ từ 1.1 -> 1.0
+            const SIDE_MARGIN = 40;
+            const TOP_BOTTOM_MARGIN = 40;
+            const MAX_ZOOM = 1.1;
+
+            const visibleMaxDrawW = canvas.width - SIDE_MARGIN * 2;
+            const visibleMaxDrawH = canvas.height - TOP_BOTTOM_MARGIN * 2;
+            const baseScale = Math.min(
+              visibleMaxDrawW / (sourceW * MAX_ZOOM),
+              visibleMaxDrawH / (sourceH * MAX_ZOOM),
+            );
+
+            const finalScale = baseScale * zoomFactor;
+            const drawW = sourceW * finalScale;
+            const drawH = sourceH * finalScale;
+            const drawX = (canvas.width - drawW) / 2;
+            const drawY = (canvas.height - drawH) / 2;
+
+            ctx.drawImage(elementToDraw, drawX, drawY, drawW, drawH);
+          } else {
+            // Ảnh dọc / video: giữ logic cover như cũ
+            const scaleW = canvas.width / sourceW;
+            const scaleH = canvas.height / sourceH;
+            const baseScale = Math.max(scaleW, scaleH);
+            const finalScale = baseScale * zoomFactor;
+            const drawW = sourceW * finalScale;
+            const drawH = sourceH * finalScale;
+            const drawX = (canvas.width - drawW) / 2;
+            const drawY = (canvas.height - drawH) / 2;
+
+            ctx.drawImage(elementToDraw, drawX, drawY, drawW, drawH);
+          }
         }
       };
 
