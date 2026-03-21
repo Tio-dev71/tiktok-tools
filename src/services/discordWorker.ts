@@ -69,7 +69,7 @@ export function startDiscordWorker() {
     partials: [Partials.Channel],
   });
 
-  client.on("ready", () => {
+  client.on("clientReady", () => {
     console.log(`Discord worker ready: ${client.user?.tag}`);
   });
 

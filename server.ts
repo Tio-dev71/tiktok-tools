@@ -11,6 +11,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 
+const app = express();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -30,7 +32,6 @@ function dataUrlToBuffer(dataUrl: string): { buffer: Buffer; mimeType: string } 
 
 
 async function startServer() {
-  const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '200mb' }));
