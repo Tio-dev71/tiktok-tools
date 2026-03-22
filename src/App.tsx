@@ -47,7 +47,7 @@ declare global {
   }
 }
 
-const DEFAULT_MASK_URL = '/effect/news-temp.jpg';
+const DEFAULT_MASK_URL = '/effect/news-temp.png';
 const DEFAULT_BGM_URL = '/effect/newsmusic.mp3';
 
 export default function App() {

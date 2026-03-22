@@ -134,7 +134,7 @@ export async function runAutomationPipeline(input: PipelineInput) {
     mediaSources: finalMediaItems,
     audioBase64: cleanedAudioBase64,
     title: finalHook,
-    currentMaskUrl: "/effect/news-temp.jpg",
+    currentMaskUrl: "/effect/news-temp.png",
     fullScript: generatedScript,
     bgmBase64: null,
     bgmVolume: 0.2,

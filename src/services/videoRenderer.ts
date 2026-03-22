@@ -92,9 +92,9 @@ export async function renderVideoFromAssets(params: {
   ensureDir(outputDir);
 
   try {
-    const templatePath = path.resolve("public", "effect", "news-temp.jpg");
+    const templatePath = path.resolve("public", "effect", "news-temp.png");
     if (!fs.existsSync(templatePath)) {
-      throw new Error("Thiếu file template: public/effect/news-temp.jpg");
+      throw new Error("Thiếu file template: public/effect/news-temp.png");
     }
 
     if (!params.imageDataUrls?.length) {
